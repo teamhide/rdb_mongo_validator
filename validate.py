@@ -1,5 +1,6 @@
 import os
 from multiprocessing import Pool
+from collections import namedtuple
 from datetime import datetime
 import logging
 from pprint import pprint
@@ -17,8 +18,9 @@ class Validate:
 
     @check_time
     def run(self):
-        connection = self.rdb.make_connection()
-        collection = self.mongo.make_connection()
+        connections = self._get_connection()
+        connection = connections.connection
+        collection = connections.collection
         count = self.validate_count(connection=connection, collection=collection)
         print("[*] Count : {}".format(count))
         with Pool(processes=5) as p:
@@ -37,8 +39,9 @@ class Validate:
         process_id = os.getpid()
         offset = obj['offset']
         limit = obj['limit']
-        connection = self.rdb.make_connection()
-        collection = self.mongo.make_connection()
+        connections = self._get_connection()
+        connection = connections.connection
+        collection = connections.collection
 
         while True:
             print("[PID:{}] NOW : {} - {}".format(process_id, offset, limit))
@@ -50,6 +53,10 @@ class Validate:
             self._validate_data(rdb_data=rdb, mongo_data=mongo)
             offset += self.increase_count
             limit += self.increase_count
+
+    def _get_connection(self):
+        connections = namedtuple('connections', ['connection', 'collection'])
+        return connections(connection=self.rdb.make_connection(), collection=self.mongo.make_connection())
 
     def _validate_data(self, rdb_data: dict, mongo_data: dict):
         # 일반 필드
