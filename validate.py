@@ -24,22 +24,14 @@ class Validate:
         collection = connections.collection
         count = self.validate_count(connection=connection, collection=collection)
         print("[*] Count : {}".format(count))
+        start_point = [0, 2000, 4000, 6000, 8000]
         with Pool(processes=5) as p:
-            p.map(
-                self.validate,
-                [
-                    {'offset': 1, 'limit': 2000},
-                    {'offset': 2001, 'limit': 4000},
-                    {'offset': 4001, 'limit': 6000},
-                    {'offset': 6001, 'limit': 8000},
-                    {'offset': 8001, 'limit': 10000},
-                ]
-            )
+            p.map(self.validate, start_point)
 
-    def validate(self, obj: dict) -> None:
+    def validate(self, offset: int) -> None:
         process_id = os.getpid()
-        offset = obj['offset']
-        limit = obj['limit']
+        offset = offset
+        limit = 2000
         connections = self._get_connection()
         connection = connections.connection
         collection = connections.collection
@@ -53,7 +45,6 @@ class Validate:
                 break
             self._validate_data(rdb_data=rdb, mongo_data=mongo)
             offset += self.increase_count
-            limit += self.increase_count
 
     def _get_connection(self) -> namedtuple:
         connections = namedtuple('connections', ['connection', 'collection'])
