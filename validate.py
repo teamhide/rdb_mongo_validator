@@ -1,3 +1,4 @@
+from typing import Optional, NoReturn, Union
 import os
 from multiprocessing import Pool
 from collections import namedtuple
@@ -17,7 +18,7 @@ class Validate:
         logging.basicConfig(filename='validation_result.log', level=logging.DEBUG)
 
     @check_time
-    def run(self):
+    def run(self) -> None:
         connections = self._get_connection()
         connection = connections.connection
         collection = connections.collection
@@ -35,7 +36,7 @@ class Validate:
                 ]
             )
 
-    def validate(self, obj: dict):
+    def validate(self, obj: dict) -> None:
         process_id = os.getpid()
         offset = obj['offset']
         limit = obj['limit']
@@ -54,11 +55,11 @@ class Validate:
             offset += self.increase_count
             limit += self.increase_count
 
-    def _get_connection(self):
+    def _get_connection(self) -> namedtuple:
         connections = namedtuple('connections', ['connection', 'collection'])
         return connections(connection=self.rdb.make_connection(), collection=self.mongo.make_connection())
 
-    def _validate_data(self, rdb_data: dict, mongo_data: dict):
+    def _validate_data(self, rdb_data: dict, mongo_data: dict) -> Optional[NoReturn]:
         # 일반 필드
         keys = [
             'user_id',
@@ -102,7 +103,7 @@ class Validate:
     def _convert_attachments(rdb_id: int,
                              rdb_body: str,
                              rdb_created_at: datetime,
-                             rdb_updated_at: datetime):
+                             rdb_updated_at: datetime) -> dict:
         return {
             'attachment_id': rdb_id,
             'body': rdb_body,
@@ -110,7 +111,7 @@ class Validate:
             'updated_at': rdb_updated_at
         }
 
-    def _validate_by_column(self, row_id: int, rdb_data: str, mongo_data: str, column_name: str):
+    def _validate_by_column(self, row_id: int, rdb_data: str, mongo_data: str, column_name: str) -> Optional[NoReturn]:
         try:
             assert rdb_data == mongo_data
         except AssertionError:
@@ -118,7 +119,7 @@ class Validate:
                 '[*] RowId: {} / Field : {} / RDB : {} / Mongo : {}'
                 .format(row_id, column_name, rdb_data, mongo_data))
 
-    def validate_count(self, connection, collection):
+    def validate_count(self, connection, collection) -> Union[NoReturn, int]:
         rdb_count = self.rdb.count(connection=connection, query=self.rdb_query)
         mongo_count = self.mongo.count(collection=collection)
         try:
@@ -128,7 +129,7 @@ class Validate:
         return rdb_count
 
     @staticmethod
-    def _print_log(logging_object: str):
+    def _print_log(logging_object: str) -> None:
         pprint(logging_object)
         logging.debug(logging_object)
 
