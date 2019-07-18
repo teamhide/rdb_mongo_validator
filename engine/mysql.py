@@ -1,7 +1,7 @@
 import pymysql
 from pymysql.connections import Connection
 from pymongo.collection import Collection
-from typing import List, Union
+from typing import Union
 from engine import Engine, EnginePool
 
 
@@ -18,7 +18,7 @@ class MySQL(Engine):
         )
         self.cursor = self.db.cursor()
 
-    def get(self, query: Union[dict, str] = None, offset: int = None, limit: int = None) -> List:
+    def get(self, query: Union[dict, str] = None, offset: int = None, limit: int = None) -> dict:
         self.cursor.execute(f'{query} LIMIT {offset}, {limit}')
         return self.cursor.fetchall()
 
@@ -35,11 +35,21 @@ class MySQLPool(EnginePool):
         self.db = db
         self.port = port
 
+    def make_connection(self) -> Connection:
+        return pymysql.connect(
+            host=self.host,
+            user=self.user,
+            password=self.passwd,
+            db=self.db,
+            charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
     def get(self,
             connection: Union[Connection, Collection],
             query: Union[dict, str] = None,
             offset: int = None,
-            limit: int = None) -> List:
+            limit: int = None) -> dict:
         cursor = connection.cursor()
         cursor.execute(f'{query} LIMIT {offset}, {limit}')
         return cursor.fetchall()

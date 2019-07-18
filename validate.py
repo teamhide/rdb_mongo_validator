@@ -5,12 +5,13 @@ from collections import namedtuple
 from datetime import datetime
 import logging
 from pprint import pprint
-from getter import RDBPool, MongoDBPool
 from config import RDBConfig, MongoConfig, check_time, MYSQL_QUERY
+from engine.mysql import MySQLPool
+from engine.mongodb import MongoDBPool
 
 
 class Validate:
-    def __init__(self, rdb: RDBPool, mongo: MongoDBPool, rdb_query: str):
+    def __init__(self, rdb: MySQLPool, mongo: MongoDBPool, rdb_query: str):
         self.rdb = rdb
         self.mongo = mongo
         self.rdb_query = rdb_query
@@ -39,7 +40,7 @@ class Validate:
         while True:
             print("[PID:{}] NOW : {} - {}".format(process_id, offset, limit))
             rdb = self.rdb.get(connection=connection, query=self.rdb_query, offset=offset, limit=limit)
-            mongo = self.mongo.get(collection=collection, offset=offset, limit=limit)
+            mongo = self.mongo.get(connection=collection, offset=offset, limit=limit)
             if len(rdb) == 0:
                 print("[PID:{}] Done".format(process_id))
                 break
@@ -112,7 +113,7 @@ class Validate:
 
     def validate_count(self, connection, collection) -> Union[NoReturn, int]:
         rdb_count = self.rdb.count(connection=connection, query=self.rdb_query)
-        mongo_count = self.mongo.count(collection=collection)
+        mongo_count = self.mongo.count(connection=collection)
         try:
             assert rdb_count == mongo_count
         except AssertionError:
@@ -127,7 +128,7 @@ class Validate:
 
 if __name__ == '__main__':
     validator = Validate(
-        rdb=RDBPool(
+        rdb=MySQLPool(
             host=RDBConfig.HOST,
             user=RDBConfig.DB_USER,
             passwd=RDBConfig.DB_PASS,

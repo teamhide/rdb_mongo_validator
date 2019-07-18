@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 import pymongo
 from pymongo.collection import Collection
 from pymysql.connections import Connection
@@ -12,7 +12,7 @@ class MongoDB(Engine):
         self.db = self.conn.get_database(db)
         self.collection = self.db.get_collection(collection)
 
-    def get(self, query: Union[dict, str] = None, offset: int = None, limit: int = None) -> List:
+    def get(self, query: Union[dict, str] = None, offset: int = None, limit: int = None) -> dict:
         if query:
             data = self.collection.find(**query)
         else:
@@ -43,7 +43,7 @@ class MongoDBPool(EnginePool):
             connection: Union[Connection, Collection],
             query: Union[dict, str] = None,
             offset: int = None,
-            limit: int = None) -> List:
+            limit: int = None) -> dict:
         if query:
             data = connection.find(**query)
         else:
